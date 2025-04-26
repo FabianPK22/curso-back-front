@@ -32,7 +32,7 @@ const courses = [
           id: 3
         },
         {
-          name: 'Redux',
+          name: 'Josias me la pela',
           exercises: 11,
           id: 4
         }
