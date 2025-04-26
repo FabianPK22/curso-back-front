@@ -3,6 +3,8 @@ const { stringify } = require('querystring')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require('mongoose')
+require('dotenv').config() 
 
 app.use(cors())
 app.use(express.json())
@@ -32,7 +34,7 @@ const courses = [
           id: 3
         },
         {
-          name: 'Josias me la pela',
+          name: 'ss',
           exercises: 11,
           id: 4
         }
@@ -56,6 +58,32 @@ const courses = [
     }
   ]
 
+
+  //Codigo de la base de datos
+  
+const password = process.env.DB_PASSWORD;
+
+const url =
+ `mongodb+srv://fperez:${encodeURIComponent(password)}@cluster0.q7vmyl0.mongodb.net/userApp?retryWrites=true&w=majority&appName=Cluster0`
+
+mongoose.set('strictQuery',false)
+
+mongoose.connect(url)
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  isActive: Boolean,
+})
+
+const User = mongoose.model('Users', userSchema)
+
+
+
+
+  
+
   app.get('/', (request, response) => {
     response.send('<h1>Hello World!</h1>')
   })
@@ -63,7 +91,12 @@ const courses = [
   app.get('/course', (req, res) => {
     const course = courses.map(course => course)
     res.json(course)
+  })
 
+  app.get('/users', (req, res) => {
+    User.find({}).then(users => {
+      res.json(users)
+    })
   })
   
   app.get('/courses/:id', (request, response) => {
