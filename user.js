@@ -10,9 +10,21 @@ mongoose.connect(url)
 
 // 2) Definición del schema
 const userSchema = new mongoose.Schema({
-  name:     String,
-  email:    String,
-  password: String,
+  name:      {
+    type: String,
+    minLength: 5,
+    required: true
+  },
+  email:     {
+    type: String,
+    minLength: 8,
+    required: true
+  },
+  password:  {
+    type: String,
+    minLength: 4,
+    required: true
+  },
   isActive: Boolean,
 });
 

@@ -69,14 +69,20 @@ const courses = [
   })
 
   //recibir usuarios por id
-  app.get('/users/:id', (request, response) => {
-    User.findById(request.params.id).then(user => {
-      response.json(user)
+  app.get('/users/:id', (request, response, next) => {
+    User.findById(request.params.id)
+    .then(user => {
+      if(user){
+        response.json(user)
+      }else{
+        response.status(404).end()
+      }
     })
+    .catch(error => next(error))
   })
 
   //crear usuarios
-  app.post('/users', (request, response) => {
+  app.post('/users', (request, response, next) => {
     const { name, email, password, isActive } = request.body;
   
     if (!name || !email || !password) {
@@ -94,15 +100,56 @@ const courses = [
     .then(savedUser => {
       response.json(savedUser);
     })
-    .catch(error => {
-      console.error(error);
-      response.status(500).json({ error: 'Failed to save user' });
-    });
-
+    .catch(error => next(error))
   })
 
+  //eliminar usuarios por id
+  app.delete('/users/:id', (request, response, next) => {
+    User.findByIdAndDelete(request.params.id)
+      .then(result => {
+        response.status(204).end()
+      })
+      .catch(error => next(error))
+  })
 
+  //editar usuarios
+  app.put('/users/:id', (request, response, next) => {
+    const { name, email, password, isActive } = request.body;
   
+    User.findByIdAndUpdate(request.params.id, {name, email, password, isActive},
+      { new: true, runValidators: true, context: 'query' }
+    )
+      .then(updateUser => {
+        response.json(updateUser)
+      })
+      .catch(error => next(error))
+  })
+
+  const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+  
+  // controlador de solicitudes con endpoint desconocido
+  app.use(unknownEndpoint)
+
+  const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+      return response.status(400).json({ error: error.message })
+    }
+  
+    next(error)
+  }
+  
+// controlador de solicitudes que resulten en errores
+app.use(errorHandler)
+
+
+
+
 
   app.get('/', (request, response) => {
     response.send('<h1>Hello World!</h1>')
@@ -201,6 +248,7 @@ const courses = [
     response.json(person)
   })
  
+  
 
   const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
