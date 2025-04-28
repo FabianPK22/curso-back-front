@@ -4,7 +4,7 @@ const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
 const mongoose = require('mongoose')
-require('dotenv').config() 
+const User = require('./user')
 
 app.use(cors())
 app.use(express.json())
@@ -60,26 +60,46 @@ const courses = [
 
 
   //Codigo de la base de datos
+
+  //recibir usuarios
+ app.get('/users', (req, res) => {
+    User.find({}).then(users => {
+      res.json(users)
+    })
+  })
+
+  //recibir usuarios por id
+  app.get('/users/:id', (request, response) => {
+    User.findById(request.params.id).then(user => {
+      response.json(user)
+    })
+  })
+
+  //crear usuarios
+  app.post('/users', (request, response) => {
+    const { name, email, password, isActive } = request.body;
   
-const password = process.env.DB_PASSWORD;
+    if (!name || !email || !password) {
+      return response.status(400).json({ error: 'Name, email, or password is missing' });
+    }
+  
+    const user = new User({
+      name,
+      email,
+      password,
+      isActive: isActive !== undefined ? isActive : false,
+    });
+  
+    user.save()
+    .then(savedUser => {
+      response.json(savedUser);
+    })
+    .catch(error => {
+      console.error(error);
+      response.status(500).json({ error: 'Failed to save user' });
+    });
 
-const url =
- `mongodb+srv://fperez:${encodeURIComponent(password)}@cluster0.q7vmyl0.mongodb.net/userApp?retryWrites=true&w=majority&appName=Cluster0`
-
-mongoose.set('strictQuery',false)
-
-mongoose.connect(url)
-
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-  isActive: Boolean,
-})
-
-const User = mongoose.model('Users', userSchema)
-
-
+  })
 
 
   
@@ -93,11 +113,7 @@ const User = mongoose.model('Users', userSchema)
     res.json(course)
   })
 
-  app.get('/users', (req, res) => {
-    User.find({}).then(users => {
-      res.json(users)
-    })
-  })
+ 
   
   app.get('/courses/:id', (request, response) => {
     const id = Number(request.params.id)
